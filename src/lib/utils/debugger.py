@@ -5,7 +5,7 @@ from __future__ import print_function
 import numpy as np
 import cv2
 from .ddd_utils import compute_box_3d, project_to_image, draw_box_3d
-import os
+
 class Debugger(object):
   def __init__(self, ipynb=False, theme='black', 
                num_classes=-1, dataset=None, down_ratio=4):
@@ -212,20 +212,14 @@ class Debugger(object):
                                        points[i][j][1] * self.down_ratio),
                    3, (int(c[0]), int(c[1]), int(c[2])), -1)
 
-  def show_all_imgs(self, pause=False, time=0, output_img_path="1.png"):
-    count = np.random.randint(100)
-
+  def show_all_imgs(self, pause=False, time=0):
     if not self.ipynb:
-
       for i, v in self.imgs.items():
-      #   cv2.imshow('{}'.format(i), v)
+        # cv2.imshow('{}'.format(i), v)
+          cv2.imwrite("result.png",v)
       # if cv2.waitKey(0 if pause else 1) == 27:
       #   import sys
       #   sys.exit(0)
-        im_path = output_img_path
-        print ("im_path ", im_path)
-        cv2.imwrite(im_path,v)
-        count+=1
     else:
       self.ax = None
       nImgs = len(self.imgs)
@@ -325,7 +319,6 @@ class Debugger(object):
     for cat in dets:
       for i in range(len(dets[cat])):
         cl = (self.colors[cat - 1, 0, 0]).tolist()
-        cl = np.random.randint(low = 10, high=255, size=3).tolist()
         if dets[cat][i, -1] > center_thresh:
           dim = dets[cat][i, 5:8]
           loc  = dets[cat][i, 8:11]

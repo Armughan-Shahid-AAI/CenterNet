@@ -43,6 +43,7 @@ class BaseTrainer(object):
 
   def run_epoch(self, phase, epoch, data_loader):
     model_with_loss = self.model_with_loss
+    # print ("xxxxxxxxxxPhasexxxxxxx ", phase)
     if phase == 'train':
       model_with_loss.train()
     else:
@@ -56,6 +57,7 @@ class BaseTrainer(object):
     data_time, batch_time = AverageMeter(), AverageMeter()
     avg_loss_stats = {l: AverageMeter() for l in self.loss_stats}
     num_iters = len(data_loader) if opt.num_iters < 0 else opt.num_iters
+    # print("num iters xxxxx",num_iters)
     bar = Bar('{}/{}'.format(opt.task, opt.exp_id), max=num_iters)
     end = time.time()
     for iter_id, batch in enumerate(data_loader):
@@ -75,6 +77,7 @@ class BaseTrainer(object):
       batch_time.update(time.time() - end)
       end = time.time()
 
+      # print ("phase xxxxxx",phase)
       Bar.suffix = '{phase}: [{0}][{1}/{2}]|Tot: {total:} |ETA: {eta:} '.format(
         epoch, iter_id, num_iters, phase=phase,
         total=bar.elapsed_td, eta=bar.eta_td)

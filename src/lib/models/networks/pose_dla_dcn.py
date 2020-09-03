@@ -465,6 +465,7 @@ class DLASeg(nn.Module):
                 fc.bias.data.fill_(-2.19)
               else:
                 fill_fc_weights(fc)
+            # print ("====xxxx{}xxxx====".format(head))
             self.__setattr__(head, fc)
 
     def forward(self, x):

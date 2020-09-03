@@ -11,7 +11,7 @@ class opts(object):
     self.parser = argparse.ArgumentParser()
     # basic experiment setting
     self.parser.add_argument('task', default='ctdet',
-                             help='ctdet | ddd | multi_pose | exdet')
+                             help='ctdet | ddd | multi_pose | exdet | det3d')
     self.parser.add_argument('--dataset', default='coco',
                              help='coco | kitti | coco_hp | pascal')
     self.parser.add_argument('--exp_id', default='default')
@@ -80,7 +80,7 @@ class opts(object):
                              help='input width. -1 for default from dataset.')
     
     # train
-    self.parser.add_argument('--lr', type=float, default=1.25e-4, 
+    self.parser.add_argument('--lr', type=float, default=1.25e-2,
                              help='learning rate for batch size 32.')
     self.parser.add_argument('--lr_step', type=str, default='90,120',
                              help='drop learning rate by 10.')
@@ -173,6 +173,14 @@ class opts(object):
                              help='loss weight for 3d bounding box size.')
     self.parser.add_argument('--rot_weight', type=float, default=1,
                              help='loss weight for orientation.')
+    #det_3d
+    self.parser.add_argument('--sc_weight', type=float, default=1,
+                             help='loss weight for split_coordinates.')
+    self.parser.add_argument('--vfr_weight', type=float, default=1,
+                             help='loss weight for predicting attribute view front/rear')
+    self.parser.add_argument('--vs_weight', type=float, default=1,
+                             help='loss weight for predicting attribute view side.')
+
     self.parser.add_argument('--peak_thresh', type=float, default=0.2)
     
     # task
@@ -282,6 +290,8 @@ class opts(object):
     return opt
 
   def update_dataset_info_and_set_heads(self, opt, dataset):
+    print("dataset #########",dataset)
+
     input_h, input_w = dataset.default_resolution
     opt.mean, opt.std = dataset.mean, dataset.std
     opt.num_classes = dataset.num_classes
@@ -312,6 +322,18 @@ class opts(object):
           {'wh': 2})
       if opt.reg_offset:
         opt.heads.update({'reg': 2})
+
+    elif opt.task == 'det_3d':
+      assert opt.dataset in ['custom_kitti']
+      assert opt.task in ['det_3d']
+      print ("xxxxxxxxxxxxxxxxxnum classesxxxxxxxxxx",opt.num_classes)
+      opt.heads = {'hm': opt.num_classes, 'sc': 2, 'vfr': 7, 'vs': 3}
+      if opt.reg_bbox:
+        opt.heads.update(
+          {'wh': 2})
+      if opt.reg_offset:
+        opt.heads.update({'reg': 2})
+
     elif opt.task == 'ctdet':
       # assert opt.dataset in ['pascal', 'coco']
       opt.heads = {'hm': opt.num_classes,
@@ -350,6 +372,9 @@ class opts(object):
       'ddd': {'default_resolution': [384, 1280], 'num_classes': 3, 
                 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
                 'dataset': 'kitti'},
+      'det_3d': {'default_resolution': [384, 1280], 'num_classes': 5,
+                'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
+                'dataset': 'custom_kitti'},
     }
     class Struct:
       def __init__(self, entries):

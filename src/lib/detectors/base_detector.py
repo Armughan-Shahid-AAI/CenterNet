@@ -21,6 +21,10 @@ class BaseDetector(object):
       opt.device = torch.device('cpu')
     
     print('Creating model...')
+    print ("###########attribuites for creating model###########")
+    print ("arch ", opt.arch)
+    print ("heads ", opt.heads)
+    print ("head_conv ", opt.head_conv)
     self.model = create_model(opt.arch, opt.heads, opt.head_conv)
     self.model = load_model(self.model, opt.load_model)
     self.model = self.model.to(opt.device)
@@ -79,7 +83,7 @@ class BaseDetector(object):
   def show_results(self, debugger, image, results):
    raise NotImplementedError
 
-  def run(self, image_or_path_or_tensor, meta=None, output_img_path="det.png"):
+  def run(self, image_or_path_or_tensor, meta=None):
     load_time, pre_time, net_time, dec_time, post_time = 0, 0, 0, 0, 0
     merge_time, tot_time = 0, 0
     debugger = Debugger(dataset=self.opt.dataset, ipynb=(self.opt.debug==3),
@@ -137,7 +141,7 @@ class BaseDetector(object):
     tot_time += end_time - start_time
 
     if self.opt.debug >= 1:
-      self.show_results(debugger, image, results, output_img_path=output_img_path)
+      self.show_results(debugger, image, results)
     
     return {'results': results, 'tot': tot_time, 'load': load_time,
             'pre': pre_time, 'net': net_time, 'dec': dec_time,

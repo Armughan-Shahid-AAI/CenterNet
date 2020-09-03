@@ -58,9 +58,14 @@ class DddDetector(BaseDetector):
     with torch.no_grad():
       torch.cuda.synchronize()
       output = self.model(images)[-1]
+      print ("xxxxxxxxxxxxxoutputxxxxxxxx\n")
+      for n,t in output.items():
+        print (n," || ", t.size())
+      print ("\nxxxxxxxxxxxxxxxxxxxxxxxx\n")
       output['hm'] = output['hm'].sigmoid_()
       output['dep'] = 1. / (output['dep'].sigmoid() + 1e-6) - 1.
       wh = output['wh'] if self.opt.reg_bbox else None
+      print ("reg offset",self.opt.reg_offset)
       reg = output['reg'] if self.opt.reg_offset else None
       torch.cuda.synchronize()
       forward_time = time.time()
@@ -97,10 +102,10 @@ class DddDetector(BaseDetector):
       img, dets[0], show_box=self.opt.reg_bbox, 
       center_thresh=self.opt.vis_thresh, img_id='det_pred')
   
-  def show_results(self, debugger, image, results, output_img_path="results/1.jpg"):
+  def show_results(self, debugger, image, results):
     debugger.add_3d_detection(
       image, results, self.this_calib,
       center_thresh=self.opt.vis_thresh, img_id='add_pred')
-    # debugger.add_bird_view(
-    #   results, center_thresh=self.opt.vis_thresh, img_id='bird_pred')
-    debugger.show_all_imgs(pause=self.pause,output_img_path= output_img_path)
+    debugger.add_bird_view(
+      results, center_thresh=self.opt.vis_thresh, img_id='bird_pred')
+    debugger.show_all_imgs(pause=self.pause)
