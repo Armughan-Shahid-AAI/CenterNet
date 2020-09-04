@@ -24,17 +24,17 @@ class Det3dDataset(data.Dataset):
         return bbox
 
     def __getitem__(self, index):
-        print ("get item called for index ", index)
+        # print ("get item called for index ", index)
         img_id = self.images[index]
-        print("img id ",img_id)
+        # print("img id ",img_id)
         img_info = self.coco.loadImgs(ids=[img_id])[0]
-        print ("img info ", img_info)
+        # print ("img info ", img_info)
         img_path = os.path.join(self.img_dir, img_info['file_name'])
-        print ("img path ", img_path)
+        # print ("img path ", img_path)
         assert os.path.exists(img_path),"img path {} doesnot exist".format(img_path)
-        print ("reading image")
+        # print ("reading image")
         img = cv2.imread(img_path)
-        print ("img read. image shape ",img.shape)
+        # print ("img read. image shape ",img.shape)
         # img=cv2.resize(img, (1280,380))
         height, width = img.shape[0], img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.])
