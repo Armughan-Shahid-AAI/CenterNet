@@ -68,9 +68,9 @@ def main(opt):
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
     print("Epoch number ",epoch)
     mark = epoch if opt.save_all else 'last'
-    print ("Training about to start")
+    # print ("Training about to start")
     log_dict_train, _ = trainer.train(epoch, train_loader)
-    print ("Trained for one epoch")
+    # print ("Trained for one epoch")
 
     logger.write('epoch: {} |'.format(epoch))
     for k, v in log_dict_train.items():

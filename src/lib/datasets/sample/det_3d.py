@@ -51,31 +51,31 @@ class Det3dDataset(data.Dataset):
             s = s * np.clip(np.random.randn() * sf + 1, 1 - sf, 1 + sf)
             c[0] += img.shape[1] * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
             c[1] += img.shape[0] * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
-        print("beginnning annotation generation")
+        # print("beginnning annotation generation")
 
-        print ("getting affine transforamtion for input")
+        # print ("getting affine transforamtion for input")
         trans_input = get_affine_transform(
             c, s, 0, [self.opt.input_w, self.opt.input_h])
-        print ("generated affine transformation for input")
-        print ("warping image", trans_input)
+        # print ("generated affine transformation for input")
+        # print ("warping image", trans_input)
         inp = cv2.warpAffine(img, trans_input,
                              (self.opt.input_w, self.opt.input_h),
                              flags=cv2.INTER_LINEAR)
-        print ("image warped")
+        # print ("image warped")
 
         inp = (inp.astype(np.float32) / 255.)
         # if self.split == 'train' and not self.opt.no_color_aug:
         #   color_aug(self._data_rng, inp, self._eig_val, self._eig_vec)
         inp = (inp - self.mean) / self.std
         inp = inp.transpose(2, 0, 1)
-        print ("image transposed")
+        # print ("image transposed")
 
         num_classes = self.opt.num_classes
-        print ("getting affine transforamtion for output")
+        # print ("getting affine transforamtion for output")
 
         trans_output = get_affine_transform(
             c, s, 0, [self.opt.output_w, self.opt.output_h])
-        print("transformations generated")
+        # print("transformations generated")
 
         hm = np.zeros(
             (num_classes, self.opt.output_h, self.opt.output_w), dtype=np.float32)
@@ -89,22 +89,22 @@ class Det3dDataset(data.Dataset):
         ind = np.zeros((self.max_objs), dtype=np.int64)
         reg_mask = np.zeros((self.max_objs), dtype=np.uint8)
         sc_mask = np.zeros((self.max_objs), dtype=np.uint8)
-        print ("getting annotation id")
+        # print ("getting annotation id")
         ann_ids = self.coco.getAnnIds(imgIds=[img_id])
-        print ("retreived annotation ids")
-        print ("loading annotation for image")
+        # print ("retreived annotation ids")
+        # print ("loading annotation for image")
         anns = self.coco.loadAnns(ids=ann_ids)
-        print ("annotations loaded for image")
+        # print ("annotations loaded for image")
 
         num_objs = min(len(anns), self.max_objs)
-        print ("num of objects ", num_objs)
-        print ("drawing gaussian")
+        # print ("num of objects ", num_objs)
+        # print ("drawing gaussian")
         draw_gaussian = draw_msra_gaussian if self.opt.mse_loss else \
             draw_umich_gaussian
-        print ("gaussian drawn")
+        # print ("gaussian drawn")
         gt_det = []
         for k in range(num_objs):
-            print ("Object number ", k)
+            # print ("Object number ", k)
             ann = anns[k]
             bbox = self._coco_box_to_bbox(ann['bbox'])
             cls_id = int(self.cat_ids[ann['category_id']])
@@ -115,7 +115,7 @@ class Det3dDataset(data.Dataset):
 
             # if flipped:
             #   bbox[[0, 2]] = width - bbox[[2, 0]] - 1
-            print ("affine transforming object")
+            # print ("affine transforming object")
             bbox[:2] = affine_transform(bbox[:2], trans_output)
             bbox[2:] = affine_transform(bbox[2:], trans_output)
             bbox[[0, 2]] = np.clip(bbox[[0, 2]], 0, self.opt.output_w - 1)
@@ -156,7 +156,7 @@ class Det3dDataset(data.Dataset):
 
                 sc[k] = split_coordinates
 
-        print ("objs gt generated")
+        # print ("objs gt generated")
         # print('gt_det', gt_det)
         # print("input size ########",inp.shape)
         ret = {'input': inp, 'hm': hm, 'ind': ind,
@@ -177,6 +177,6 @@ class Det3dDataset(data.Dataset):
             meta = {'c': c, 's': s, 'gt_det': gt_det,
                     'image_path': img_path, 'img_id': img_id}
             ret['meta'] = meta
-        print("annotation generated")
+        # print("annotation generated")
         return ret
 

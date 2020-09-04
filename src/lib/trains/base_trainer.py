@@ -57,12 +57,12 @@ class BaseTrainer(object):
     data_time, batch_time = AverageMeter(), AverageMeter()
     avg_loss_stats = {l: AverageMeter() for l in self.loss_stats}
     num_iters = len(data_loader) if opt.num_iters < 0 else opt.num_iters
-    print("num iters xxxxx",num_iters)
+    # print("num iters xxxxx",num_iters)
     bar = Bar('{}/{}'.format(opt.task, opt.exp_id), max=num_iters)
     end = time.time()
-    print("running epoch at line 63 base trainer")
+    # print("running epoch at line 63 base trainer")
     for iter_id, batch in enumerate(data_loader):
-      print ("Batch loaded")
+      # print ("Batch loaded")
       if iter_id >= num_iters:
         break
       data_time.update(time.time() - end)

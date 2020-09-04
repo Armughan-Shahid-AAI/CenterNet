@@ -174,7 +174,7 @@ class opts(object):
     self.parser.add_argument('--rot_weight', type=float, default=1,
                              help='loss weight for orientation.')
     #det_3d
-    self.parser.add_argument('--sc_weight', type=float, default=1,
+    self.parser.add_argument('--sc_weight', type=float, default=100,
                              help='loss weight for split_coordinates.')
     self.parser.add_argument('--vfr_weight', type=float, default=1,
                              help='loss weight for predicting attribute view front/rear')
