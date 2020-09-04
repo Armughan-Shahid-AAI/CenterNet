@@ -66,6 +66,7 @@ class Det3dDataset(data.Dataset):
         num_classes = self.opt.num_classes
         trans_output = get_affine_transform(
             c, s, 0, [self.opt.output_w, self.opt.output_h])
+        print("transformations generated")
 
         hm = np.zeros(
             (num_classes, self.opt.output_h, self.opt.output_w), dtype=np.float32)
@@ -87,6 +88,7 @@ class Det3dDataset(data.Dataset):
             draw_umich_gaussian
         gt_det = []
         for k in range(num_objs):
+            print ("Object number ", k)
             ann = anns[k]
             bbox = self._coco_box_to_bbox(ann['bbox'])
             cls_id = int(self.cat_ids[ann['category_id']])
@@ -97,6 +99,7 @@ class Det3dDataset(data.Dataset):
 
             # if flipped:
             #   bbox[[0, 2]] = width - bbox[[2, 0]] - 1
+            print ("affine transforming object")
             bbox[:2] = affine_transform(bbox[:2], trans_output)
             bbox[2:] = affine_transform(bbox[2:], trans_output)
             bbox[[0, 2]] = np.clip(bbox[[0, 2]], 0, self.opt.output_w - 1)
@@ -137,7 +140,7 @@ class Det3dDataset(data.Dataset):
 
                 sc[k] = split_coordinates
 
-
+        print ("objs gt generated")
         # print('gt_det', gt_det)
         # print("input size ########",inp.shape)
         ret = {'input': inp, 'hm': hm, 'ind': ind,
