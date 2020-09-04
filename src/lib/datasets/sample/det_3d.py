@@ -33,7 +33,7 @@ class Det3dDataset(data.Dataset):
         assert os.path.exists(img_path),"img path {} doesnot exist".format(img_path)
         print ("reading image")
         img = cv2.imread(img_path)
-        print ("img read")
+        print ("img read. image shape ",img.shape)
         # img=cv2.resize(img, (1280,380))
         height, width = img.shape[0], img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.])
@@ -52,18 +52,26 @@ class Det3dDataset(data.Dataset):
             c[1] += img.shape[0] * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
         print("beginnning annotation generation")
 
+        print ("getting affine transforamtion for input")
         trans_input = get_affine_transform(
             c, s, 0, [self.opt.input_w, self.opt.input_h])
+        print ("generated affine transformation for input")
+        print ("warping image")
         inp = cv2.warpAffine(img, trans_input,
                              (self.opt.input_w, self.opt.input_h),
                              flags=cv2.INTER_LINEAR)
+        print ("image warped")
+
         inp = (inp.astype(np.float32) / 255.)
         # if self.split == 'train' and not self.opt.no_color_aug:
         #   color_aug(self._data_rng, inp, self._eig_val, self._eig_vec)
         inp = (inp - self.mean) / self.std
         inp = inp.transpose(2, 0, 1)
+        print ("image transposed")
 
         num_classes = self.opt.num_classes
+        print ("getting affine transforamtion for output")
+
         trans_output = get_affine_transform(
             c, s, 0, [self.opt.output_w, self.opt.output_h])
         print("transformations generated")
@@ -80,12 +88,19 @@ class Det3dDataset(data.Dataset):
         ind = np.zeros((self.max_objs), dtype=np.int64)
         reg_mask = np.zeros((self.max_objs), dtype=np.uint8)
         sc_mask = np.zeros((self.max_objs), dtype=np.uint8)
-
+        print ("getting annotation id")
         ann_ids = self.coco.getAnnIds(imgIds=[img_id])
+        print ("retreived annotation ids")
+        print ("loading annotation for image")
         anns = self.coco.loadAnns(ids=ann_ids)
+        print ("annotations loaded for image")
+
         num_objs = min(len(anns), self.max_objs)
+        print ("num of objects ", num_objs)
+        print ("drawing gaussian")
         draw_gaussian = draw_msra_gaussian if self.opt.mse_loss else \
             draw_umich_gaussian
+        print ("gaussian drawn")
         gt_det = []
         for k in range(num_objs):
             print ("Object number ", k)
