@@ -23,12 +23,18 @@ class Det3dDataset(data.Dataset):
         return bbox
 
     def __getitem__(self, index):
+        print ("get item called for index ", index)
         img_id = self.images[index]
+        print("img id ",img_id)
         img_info = self.coco.loadImgs(ids=[img_id])[0]
+        print ("img info ", img_info)
         img_path = os.path.join(self.img_dir, img_info['file_name'])
+        print ("img path ", img_path)
         assert os.path.exists(img_path),"img path {} doesnot exist".format(img_path)
+        print ("reading image")
         img = cv2.imread(img_path)
-        img=cv2.resize(img, (1280,380))
+        print ("img read")
+        # img=cv2.resize(img, (1280,380))
         height, width = img.shape[0], img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.])
         if self.opt.keep_res:
@@ -44,6 +50,7 @@ class Det3dDataset(data.Dataset):
             s = s * np.clip(np.random.randn() * sf + 1, 1 - sf, 1 + sf)
             c[0] += img.shape[1] * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
             c[1] += img.shape[0] * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
+        print("beginnning annotation generation")
 
         trans_input = get_affine_transform(
             c, s, 0, [self.opt.input_w, self.opt.input_h])
@@ -151,6 +158,6 @@ class Det3dDataset(data.Dataset):
             meta = {'c': c, 's': s, 'gt_det': gt_det,
                     'image_path': img_path, 'img_id': img_id}
             ret['meta'] = meta
-
+        print("annotation generated")
         return ret
 
