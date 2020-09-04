@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import json
 import cv2
+cv2.setNumThreads(0)
 import os
 import math
 from utils.image import flip, color_aug
@@ -56,7 +57,7 @@ class Det3dDataset(data.Dataset):
         trans_input = get_affine_transform(
             c, s, 0, [self.opt.input_w, self.opt.input_h])
         print ("generated affine transformation for input")
-        print ("warping image")
+        print ("warping image", trans_input)
         inp = cv2.warpAffine(img, trans_input,
                              (self.opt.input_w, self.opt.input_h),
                              flags=cv2.INTER_LINEAR)
