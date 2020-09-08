@@ -188,10 +188,32 @@ class BinRotLoss(nn.Module):
   def __init__(self):
     super(BinRotLoss, self).__init__()
   
-  def forward(self, output, mask, ind, rotbin, rotres):
+  def forward(self, output, mask, ind, rotbin, rotres ):
     pred = _transpose_and_gather_feat(output, ind)
     loss = compute_rot_loss(pred, rotbin, rotres, mask)
     return loss
+
+
+class CrossEntropyLossWMask(nn.Module):
+    def __init__(self):
+        super(CrossEntropyLossWMask, self).__init__()
+
+    def forward(self, output, mask, ind, target, num_classes):
+        #target (B, num_objs )
+        #output (B, C, img shape)
+        #mask (B, num_objs)
+        #ind ind of the objects (B, num_objs)
+        #num classes int
+
+        preds = _transpose_and_gather_feat(output, ind) # (B,num,objs,C)
+        mask = mask.view(-1, 1) #(B*num_objs,1)
+        preds = preds.view(-1, num_classes) #(B*num_objs,C)
+
+        mask = mask.expand_as(preds)
+        preds = preds * mask.float() #output is pred
+        target = target.view(-1)
+        return F.cross_entropy(preds, target.long(), reduction='elementwise_mean')
+
 
 def compute_res_loss(output, target):
     return F.smooth_l1_loss(output, target, reduction='elementwise_mean')

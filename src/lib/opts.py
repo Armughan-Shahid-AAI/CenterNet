@@ -139,7 +139,7 @@ class opts(object):
                              help='probability of applying '
                                   'rotation augmentation.')
     # ddd
-    self.parser.add_argument('--aug_ddd', type=float, default=0.5,
+    self.parser.add_argument('--aug_ddd', type=float, default=0.2,
                              help='probability of applying crop augmentation.')
     self.parser.add_argument('--rect_mask', action='store_true',
                              help='for ignored object, apply mask on the '
@@ -326,7 +326,7 @@ class opts(object):
     elif opt.task == 'det_3d':
       assert opt.dataset in ['custom_kitti']
       assert opt.task in ['det_3d']
-      print ("xxxxxxxxxxxxxxxxxnum classesxxxxxxxxxx",opt.num_classes)
+      print ("xxxxxxxxxxxxxxxxx num classes xxxxxxxxxx",opt.num_classes)
       opt.heads = {'hm': opt.num_classes, 'sc': 2, 'vfr': 7, 'vs': 3}
       if opt.reg_bbox:
         opt.heads.update(
@@ -372,7 +372,7 @@ class opts(object):
       'ddd': {'default_resolution': [384, 1280], 'num_classes': 3, 
                 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
                 'dataset': 'kitti'},
-      'det_3d': {'default_resolution': [384, 1280], 'num_classes': 5,
+      'det_3d': {'default_resolution': [352, 640], 'num_classes': 5,
                 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
                 'dataset': 'custom_kitti'},
     }

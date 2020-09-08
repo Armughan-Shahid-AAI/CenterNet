@@ -62,6 +62,13 @@ class Debugger(object):
       self.focal_length = 721.5377
       self.W = 1242
       self.H = 375
+    elif dataset == 'custom_kitti':
+        self.names = custom_kitti_class_name
+        self.focal_length = 721.5377
+        self.W = 1242
+        self.H = 375
+
+    print("dataset ", dataset)
     num_classes = len(self.names)
     self.down_ratio=down_ratio
     # for bird view
@@ -432,6 +439,8 @@ class Debugger(object):
 kitti_class_name = [
   'p', 'v', 'b'
 ]
+
+custom_kitti_class_name = [ 'Car', 'Van/suv', 'Bus/truck', 'Trailer','Others']
 
 gta_class_name = [
   'p', 'v'

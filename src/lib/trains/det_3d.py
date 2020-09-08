@@ -5,7 +5,7 @@ from __future__ import print_function
 import torch
 import numpy as np
 
-from models.losses import FocalLoss, L1Loss, BinRotLoss
+from models.losses import FocalLoss, L1Loss, BinRotLoss, CrossEntropyLossWMask
 from models.decode import ddd_decode
 from models.utils import _sigmoid
 from utils.debugger import Debugger
@@ -19,8 +19,8 @@ class Det3dLoss(torch.nn.Module):
         super(Det3dLoss, self).__init__()
         print ("Using MSE loss for clasification = ",opt.mse_loss)
         self.crit = torch.nn.MSELoss() if opt.mse_loss else FocalLoss()
-        self.crit_view_side = FocalLoss()
-        self.crit_view_front_rear = FocalLoss()
+        self.crit_view_side = CrossEntropyLossWMask()
+        self.crit_view_front_rear = CrossEntropyLossWMask()
         self.crit_reg = L1Loss()
         self.opt = opt
 
@@ -37,8 +37,6 @@ class Det3dLoss(torch.nn.Module):
             output = outputs[s]
             output['hm'] = _sigmoid(output['hm'])
             output['sc'] = output['sc'].sigmoid_()
-            output['vfr'] = _sigmoid(output['vfr'])
-            output['vs'] = _sigmoid(output['vs'])
 
             # if opt.eval_oracle_dep:
             #     output['dep'] = torch.from_numpy(gen_oracle_map(
@@ -52,10 +50,14 @@ class Det3dLoss(torch.nn.Module):
                                           batch['ind'], batch['sc']) / opt.num_stacks
 
             if opt.vfr_weight > 0:
-                vfr_loss += self.crit_view_front_rear(output['vfr'], batch['vfr']) / opt.num_stacks
+                vfr_loss += self.crit_view_front_rear(output['vfr'], batch['reg_mask'],
+                                         batch['ind'], batch['vfr'], 7)
+                # vfr_loss += self.crit_view_front_rear(output['vfr'], batch['vfr']) / opt.num_stacks
 
             if opt.vs_weight > 0:
-                vs_loss += self.crit_view_side(output['vs'], batch['vs']) / opt.num_stacks
+                vs_loss += self.crit_view_side(output['vs'], batch['reg_mask'],
+                                                      batch['ind'], batch['vs'], 3)
+                # vs_loss += self.crit_view_side(output['vs'], batch['vs']) / opt.num_stacks
 
 
             if opt.reg_bbox and opt.wh_weight > 0:

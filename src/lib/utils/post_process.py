@@ -72,11 +72,47 @@ def ddd_post_process_3d(dets, calibs):
     ret.append(preds)
   return ret
 
+def det3d_post_process_2d(dets, c, s, opt):
+  # dets: batch x max_dets x dim
+  # return 1-based class det list
+  ret = []
+  include_wh = True
+  for i in range(dets.shape[0]):
+    top_preds = {}
+    dets[i, :, :2] = transform_preds(
+          dets[i, :, 0:2], c[i], s[i], (opt.output_w, opt.output_h))
+    classes = dets[i, :, -1]
+    for j in range(opt.num_classes):
+      inds = (classes == j)
+      top_preds[j + 1] = dets[i, inds, :3].astype(np.float32)
+      # top_preds[j + 1] = np.concatenate([
+      #   dets[i, inds, :3].astype(np.float32)
+        # get_alpha(dets[i, inds, 3:11])[:, np.newaxis].astype(np.float32),
+        # get_pred_depth(dets[i, inds, 11:12]).astype(np.float32),
+        # dets[i, inds, 12:15].astype(np.float32)
+      # ], axis=1)
+      if include_wh:
+        top_preds[j + 1] = np.concatenate([
+          top_preds[j + 1],
+          transform_preds(
+            dets[i, inds, 3:5], c[i], s[i], (opt.output_w, opt.output_h))
+          .astype(np.float32)], axis=1)
+    ret.append(top_preds)
+  return ret
+
+
 def ddd_post_process(dets, c, s, calibs, opt):
   # dets: batch x max_dets x dim
   # return 1-based class det list
   dets = ddd_post_process_2d(dets, c, s, opt)
   dets = ddd_post_process_3d(dets, calibs)
+  return dets
+
+def det3d_post_process(dets, c, s, opt):
+  # dets: batch x max_dets x dim
+  # return 1-based class det list
+  dets = det3d_post_process_2d(dets, c, s, opt)
+  # dets = ddd_post_process_3d(dets, calibs)
   return dets
 
 

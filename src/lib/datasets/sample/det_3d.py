@@ -16,7 +16,8 @@ from utils.image import get_affine_transform, affine_transform
 from utils.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian
 import pycocotools.coco as coco
 
-
+#changed
+# img_ind_test = 0
 class Det3dDataset(data.Dataset):
     def _coco_box_to_bbox(self, box):
         bbox = np.array([box[0], box[1], box[0] + box[2], box[1] + box[3]],
@@ -24,18 +25,29 @@ class Det3dDataset(data.Dataset):
         return bbox
 
     def __getitem__(self, index):
-        # print ("get item called for index ", index)
+        # #change
+        # print("debugging ")
+        # print("keep res",self.opt.keep_res)
+        # print("input_w",self.opt.input_w)
+        # print("input h",self.opt.input_h)
+        # print("output w", self.opt.output_w)
+        # print("output h", self.opt.output_h)
+        # print("scale", self.opt.scale)
+        # print("shift", self.opt.shift)
+        # global img_ind_test
+
+
         img_id = self.images[index]
-        # print("img id ",img_id)
         img_info = self.coco.loadImgs(ids=[img_id])[0]
-        # print ("img info ", img_info)
         img_path = os.path.join(self.img_dir, img_info['file_name'])
-        # print ("img path ", img_path)
         assert os.path.exists(img_path),"img path {} doesnot exist".format(img_path)
-        # print ("reading image")
         img = cv2.imread(img_path)
-        # print ("img read. image shape ",img.shape)
-        # img=cv2.resize(img, (1280,380))
+        # #change
+        # print("index global  ", img_ind_test)
+        # print("img path ",img_path)
+        # #change
+        # drawn_img = img.copy()
+
         height, width = img.shape[0], img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.])
         if self.opt.keep_res:
@@ -75,15 +87,19 @@ class Det3dDataset(data.Dataset):
 
         trans_output = get_affine_transform(
             c, s, 0, [self.opt.output_w, self.opt.output_h])
-        # print("transformations generated")
 
+        # #changed
+        # drawn_img = cv2.warpAffine(drawn_img, trans_output,
+        #                (self.opt.output_w, self.opt.output_h),
+        #                flags=cv2.INTER_LINEAR)
         hm = np.zeros(
             (num_classes, self.opt.output_h, self.opt.output_w), dtype=np.float32)
-        vs = np.zeros((3,self.opt.output_h, self.opt.output_w), dtype=np.float32)
-        vfr = np.zeros((7,self.opt.output_h, self.opt.output_w), dtype=np.float32)
+
 
         wh = np.zeros((self.max_objs, 2), dtype=np.float32)
         sc = np.zeros((self.max_objs, 2), dtype=np.float32)
+        vs = np.zeros((self.max_objs), dtype=np.float32)
+        vfr = np.zeros((self.max_objs), dtype=np.float32)
 
         reg = np.zeros((self.max_objs, 2), dtype=np.float32)
         ind = np.zeros((self.max_objs), dtype=np.int64)
@@ -109,7 +125,6 @@ class Det3dDataset(data.Dataset):
             bbox = self._coco_box_to_bbox(ann['bbox'])
             cls_id = int(self.cat_ids[ann['category_id']])
             split_coordinates = ann['split_coords']
-            # print ("initial split coordinates ", split_coordinates)
             view_front_rear = ann['view_front_rear']
             view_side = ann['view_side']
 
@@ -129,11 +144,10 @@ class Det3dDataset(data.Dataset):
                 ct_int = ct.astype(np.int32)
 
                 draw_gaussian(hm[cls_id], ct, radius)
-                draw_gaussian(vfr[view_front_rear], ct, radius)
-                draw_gaussian(vs[view_side], ct, radius)
+                # draw_gaussian(vfr[view_front_rear], ct, radius)
+                # draw_gaussian(vs[view_side], ct, radius)
 
-                # vfr[k][view_front_rear] = view_front_rear
-                # vs[k] = view_side
+
 
                 wh[k] = 1. * w, 1. * h
                 gt_det.append([ct[0], ct[1]] + [cls_id])
@@ -145,27 +159,23 @@ class Det3dDataset(data.Dataset):
                 reg[k] = ct - ct_int
                 reg_mask[k] = 1 #if not aug else 0
 
-                # print("split_coordinates input ",split_coordinates)
-                if view_front_rear<4:
-                    split_coordinates = affine_transform(split_coordinates, trans_output)
-                    # print("split coordinates transformed ", split_coordinates)
-                    # print ("output split coordinates ", split_coordinates)
-                    split_coordinates = (split_coordinates-bbox[:2])/wh[k]
-                    # print("split coordinates deltas ", split_coordinates)
-                    sc_mask[k]=1
-
+                split_coordinates = affine_transform(split_coordinates, trans_output)
+                split_coordinates = (split_coordinates-bbox[:2])/wh[k]
+                sc_mask[k]=1
                 sc[k] = split_coordinates
+                vfr[k] = view_front_rear
+                vs[k] = view_side
 
-        # print ("objs gt generated")
-        # print('gt_det', gt_det)
-        # print("input size ########",inp.shape)
+                #changed
+                # drawn_img = self.add_gts_to_img(drawn_img, [bbox], [split_coordinates], 1)
+
         ret = {'input': inp, 'hm': hm, 'ind': ind,
                 'reg_mask': reg_mask, "sc": sc,
                "sc_mask": sc_mask, 'vfr': vfr,
                'vs': vs
                }
 
-        # print ("reg bbox w h = ",self.opt.reg_bbox)
+
         if self.opt.reg_bbox:
             ret.update({'wh': wh})
         # print("reg bbox center offset = ", self.opt.reg_offset)
@@ -177,6 +187,30 @@ class Det3dDataset(data.Dataset):
             meta = {'c': c, 's': s, 'gt_det': gt_det,
                     'image_path': img_path, 'img_id': img_id}
             ret['meta'] = meta
-        # print("annotation generated")
+
+        # #change
+        # img_ind_test+=1
+        # cv2.imwrite("drawn/{}".format(os.path.basename(img_path)), drawn_img)
+
+
         return ret
 
+    def covert_tensor_to_img(self, img_tensor):
+        inp = img_tensor.transpose(1,2,0)
+        inp = (inp * self.std)+self.mean
+        inp = (inp*255).astype(np.float32)
+        return inp
+
+    def add_gts_to_img(self, img, boxes, split_points, num_objs):
+        img = img.copy()
+
+        for objInd in range(num_objs):
+            x1, y1, x2, y2 = np.array(boxes[objInd],dtype=np.int32)
+            w,h = x2-x1, y2-y1
+            sc_delta_x, sc_delta_y = split_points[objInd]
+            sc_x = int((sc_delta_x*w) + x1)
+            sc_y = int((sc_delta_y*h) + y1)
+
+            img = cv2.rectangle(img, (x1,y1),(x2,y2), (255,0,0), 2)
+            img = cv2.circle(img, (sc_x, sc_y), 3, (255,255,0), 2)
+        return img
