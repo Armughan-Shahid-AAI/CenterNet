@@ -5,7 +5,7 @@ from __future__ import print_function
 import torch
 import numpy as np
 
-from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
+from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss, CrossEntropyLossWMask
 from models.decode import multi_pose_decode
 from models.utils import _sigmoid, flip_tensor, flip_lr_off, flip_lr
 from utils.debugger import Debugger
@@ -22,11 +22,19 @@ class MultiPoseLoss(torch.nn.Module):
                    torch.nn.L1Loss(reduction='sum')
     self.crit_reg = RegL1Loss() if opt.reg_loss == 'l1' else \
                     RegLoss() if opt.reg_loss == 'sl1' else None
+
+    ##changed
+    self.crit_view_side = CrossEntropyLossWMask()
+    self.crit_view_front_rear = CrossEntropyLossWMask()
+
     self.opt = opt
 
   def forward(self, outputs, batch):
     opt = self.opt
-    hm_loss, wh_loss, off_loss = 0, 0, 0
+
+    ##changed
+    # hm_loss, wh_loss, off_loss = 0, 0, 0
+    hm_loss, wh_loss, off_loss, vfr_loss, vs_loss = 0, 0, 0, 0, 0
     hp_loss, off_loss, hm_hp_loss, hp_offset_loss = 0, 0, 0, 0
     for s in range(opt.num_stacks):
       output = outputs[s]
@@ -62,6 +70,16 @@ class MultiPoseLoss(torch.nn.Module):
       else:
         hp_loss += self.crit_kp(output['hps'], batch['hps_mask'], 
                                 batch['ind'], batch['hps']) / opt.num_stacks
+
+      ##changed
+      if opt.vfr_weight > 0:
+        vfr_loss += self.crit_view_front_rear(output['vfr'], batch['reg_mask'],
+                                              batch['ind'], batch['vfr'], 7)
+      if opt.vs_weight > 0:
+        vs_loss += self.crit_view_side(output['vs'], batch['reg_mask'],
+                                       batch['ind'], batch['vs'], 3)
+
+
       if opt.wh_weight > 0:
         wh_loss += self.crit_reg(output['wh'], batch['reg_mask'],
                                  batch['ind'], batch['wh']) / opt.num_stacks
@@ -75,13 +93,21 @@ class MultiPoseLoss(torch.nn.Module):
       if opt.hm_hp and opt.hm_hp_weight > 0:
         hm_hp_loss += self.crit_hm_hp(
           output['hm_hp'], batch['hm_hp']) / opt.num_stacks
+
+    ##changed
     loss = opt.hm_weight * hm_loss + opt.wh_weight * wh_loss + \
            opt.off_weight * off_loss + opt.hp_weight * hp_loss + \
-           opt.hm_hp_weight * hm_hp_loss + opt.off_weight * hp_offset_loss
-    
-    loss_stats = {'loss': loss, 'hm_loss': hm_loss, 'hp_loss': hp_loss, 
+           opt.hm_hp_weight * hm_hp_loss + opt.off_weight * hp_offset_loss + \
+           opt.vfr_weight * vfr_loss + opt.vs_weight * vs_loss
+
+    ##changed
+    # loss_stats = {'loss': loss, 'hm_loss': hm_loss, 'hp_loss': hp_loss,
+    #               'hm_hp_loss': hm_hp_loss, 'hp_offset_loss': hp_offset_loss,
+    #               'wh_loss': wh_loss, 'off_loss': off_loss}
+
+    loss_stats = {'loss': loss, 'hm_loss': hm_loss, 'hp_loss': hp_loss,
                   'hm_hp_loss': hm_hp_loss, 'hp_offset_loss': hp_offset_loss,
-                  'wh_loss': wh_loss, 'off_loss': off_loss}
+                  'wh_loss': wh_loss, 'off_loss': off_loss, "vfr_loss": vfr_loss, "vs_loss": vs_loss}
     return loss, loss_stats
 
 class MultiPoseTrainer(BaseTrainer):
@@ -89,8 +115,12 @@ class MultiPoseTrainer(BaseTrainer):
     super(MultiPoseTrainer, self).__init__(opt, model, optimizer=optimizer)
   
   def _get_losses(self, opt):
-    loss_states = ['loss', 'hm_loss', 'hp_loss', 'hm_hp_loss', 
-                   'hp_offset_loss', 'wh_loss', 'off_loss']
+    ##changed
+    # loss_states = ['loss', 'hm_loss', 'hp_loss', 'hm_hp_loss',
+    #                'hp_offset_loss', 'wh_loss', 'off_loss']
+    loss_states = ['loss', 'hm_loss', 'hp_loss', 'hm_hp_loss',
+                   'hp_offset_loss', 'wh_loss', 'off_loss', "vfr_loss", "vs_loss"]
+
     loss = MultiPoseLoss(opt)
     return loss_states, loss
 

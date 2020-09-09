@@ -96,6 +96,9 @@ class MultiPoseDataset(data.Dataset):
     hp_offset = np.zeros((self.max_objs * num_joints, 2), dtype=np.float32)
     hp_ind = np.zeros((self.max_objs * num_joints), dtype=np.int64)
     hp_mask = np.zeros((self.max_objs * num_joints), dtype=np.int64)
+    ##changed
+    vs = np.zeros((self.max_objs), dtype=np.float32)
+    vfr = np.zeros((self.max_objs), dtype=np.float32)
 
     draw_gaussian = draw_msra_gaussian if self.opt.mse_loss else \
                     draw_umich_gaussian
@@ -106,6 +109,10 @@ class MultiPoseDataset(data.Dataset):
       bbox = self._coco_box_to_bbox(ann['bbox'])
       cls_id = int(ann['category_id']) - 1
       pts = np.array(ann['keypoints'], np.float32).reshape(num_joints, 3)
+      #changed
+      view_front_rear = ann['view_front_rear']
+      view_side = ann['view_side']
+
       if flipped:
         bbox[[0, 2]] = width - bbox[[2, 0]] - 1
         pts[:, 0] = width - pts[:, 0] - 1
@@ -124,6 +131,11 @@ class MultiPoseDataset(data.Dataset):
         wh[k] = 1. * w, 1. * h
         ind[k] = ct_int[1] * output_res + ct_int[0]
         reg[k] = ct - ct_int
+
+        ##changed
+        vfr[k] = view_front_rear
+        vs[k] = view_side
+
         reg_mask[k] = 1
         num_kpts = pts[:, 2].sum()
         if num_kpts == 0:
@@ -158,8 +170,14 @@ class MultiPoseDataset(data.Dataset):
       hm = hm * 0 + 0.9999
       reg_mask *= 0
       kps_mask *= 0
+
+    ##changed
+    # ret = {'input': inp, 'hm': hm, 'reg_mask': reg_mask, 'ind': ind, 'wh': wh,
+    #        'hps': kps, 'hps_mask': kps_mask}
+
     ret = {'input': inp, 'hm': hm, 'reg_mask': reg_mask, 'ind': ind, 'wh': wh,
-           'hps': kps, 'hps_mask': kps_mask}
+           'hps': kps, 'hps_mask': kps_mask, "vfr": vfr, "vs": vs}
+
     if self.opt.dense_hp:
       dense_kps = dense_kps.reshape(num_joints * 2, output_res, output_res)
       dense_kps_mask = dense_kps_mask.reshape(

@@ -344,7 +344,10 @@ class opts(object):
       # assert opt.dataset in ['coco_hp']
       opt.flip_idx = dataset.flip_idx
       num_joints = 1
-      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints}
+      ##changed
+      # opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints}
+      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints, 'vfr': 7, 'vs':3 }
+
       if opt.reg_offset:
         opt.heads.update({'reg': 2})
       if opt.hm_hp:
