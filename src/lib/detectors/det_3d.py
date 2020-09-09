@@ -59,7 +59,7 @@ class Det3DDetector(BaseDetector):
 
                 print(n, " || ", t.size())
                 print(n)
-                print(t)
+                print(t.max())
                 print("\n\n")
             print("\nxxxxxxxxxxxxxxxxxxxxxxxx\n")
             output['hm'] = output['hm'].sigmoid_()

@@ -144,7 +144,7 @@ class BaseDetector(object):
     # if self.opt.debug >= 1:
     #   self.show_results(debugger, image, results)
     #
-    print("detections ",detections[0])
+    # print("detections ",detections[0])
 
     # return {'results': results, 'tot': tot_time, 'load': load_time,
     #         'pre': pre_time, 'net': net_time, 'dec': dec_time,
