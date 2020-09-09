@@ -9,7 +9,9 @@ import cv2
 
 # DATA_PATH = '../../data/custom_kitti/'
 DATA_PATH="/media/rameez/Drive1/armughan/incline/generate_3d_box_annotations/outputs/OD_1"
-DATA_PATH="../../data/custom_kitti"
+DATA_PATH="../../data/custom_coco"
+SET_TO_SAME_CATEGORY = True
+
 # VAL_PATH = DATA_PATH + 'training/label_val/'
 import os
 import _init_paths
@@ -56,10 +58,16 @@ def _bbox_to_coco_bbox(bbox):
 
 cats = [ 'Car', 'Van/suv', 'Bus/truck', 'Trailer','Others']
 cat_ids = {cat: i + 1 for i, cat in enumerate(cats)}
+if SET_TO_SAME_CATEGORY:
+    cat_ids = {cat: 1 for i, cat in enumerate(cats)}
+
 
 cat_info = []
-for i, cat in enumerate(cats):
-    cat_info.append({'name': cat, 'id': i + 1})
+if SET_TO_SAME_CATEGORY:
+    cat_info.append({'name': "vehicle", 'id': 1, 'keypoints': ["split_point"]})
+else:
+    for i, cat in enumerate(cats):
+            cat_info.append({'name': cat, 'id': i + 1, 'keypoints': ["split_point"]})
 
 
 images_path = os.path.join(DATA_PATH , 'images')
@@ -106,7 +114,11 @@ for split in splits:
                    'bbox': _bbox_to_coco_bbox(bbox),
                    'split_coords': split_coords,
                    'view_front_rear': view_front_rear,
-                   'view_side': view_side}
+                   'view_side': view_side,
+                   'keypoints': list(split_coords) + [2],
+                   'num_keypoints': 1,
+
+                   }
             ret['annotations'].append(ann)
 
 

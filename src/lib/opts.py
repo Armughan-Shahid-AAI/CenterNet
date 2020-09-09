@@ -343,11 +343,12 @@ class opts(object):
     elif opt.task == 'multi_pose':
       # assert opt.dataset in ['coco_hp']
       opt.flip_idx = dataset.flip_idx
-      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 34}
+      num_joints = 1
+      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints}
       if opt.reg_offset:
         opt.heads.update({'reg': 2})
       if opt.hm_hp:
-        opt.heads.update({'hm_hp': 17})
+        opt.heads.update({'hm_hp': num_joints})
       if opt.reg_hp_offset:
         opt.heads.update({'hp_offset': 2})
     else:
@@ -364,11 +365,10 @@ class opts(object):
                 'mean': [0.408, 0.447, 0.470], 'std': [0.289, 0.274, 0.278],
                 'dataset': 'coco'},
       'multi_pose': {
-        'default_resolution': [512, 512], 'num_classes': 1, 
+        'default_resolution': [352, 640], 'num_classes': 1,
         'mean': [0.408, 0.447, 0.470], 'std': [0.289, 0.274, 0.278],
-        'dataset': 'coco_hp', 'num_joints': 17,
-        'flip_idx': [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], 
-                     [11, 12], [13, 14], [15, 16]]},
+        'dataset': 'coco_hp', 'num_joints': 1,
+        'flip_idx': []},
       'ddd': {'default_resolution': [384, 1280], 'num_classes': 3, 
                 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
                 'dataset': 'kitti'},
