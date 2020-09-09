@@ -37,7 +37,11 @@ class Det3dLoss(torch.nn.Module):
             output = outputs[s]
             output['hm'] = _sigmoid(output['hm'])
             output['sc'] = output['sc'].sigmoid_()
-
+            
+            print ("max hm in output after sigmoid", output['hm'].max())
+            print ("max hm in batch after sigmoid", batch['hm'].max())
+            print ("num hm in output after sigmoid > 0.5", (output['hm']>0.5).sum())
+            print ("num hm in batch after sigmoid > 0.5", (batch['hm']>0.5).sum())
             # if opt.eval_oracle_dep:
             #     output['dep'] = torch.from_numpy(gen_oracle_map(
             #         batch['dep'].detach().cpu().numpy(),
