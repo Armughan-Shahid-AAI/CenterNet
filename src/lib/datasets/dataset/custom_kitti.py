@@ -31,7 +31,7 @@ class CUSTOM_KITTI(data.Dataset):
         self.class_name = [
             '__background__',  'Car', 'Van/suv', 'Bus/truck', 'Trailer','Others']
         self.cat_ids = {1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
-        self.cat_ids = {1: 1, 2: 1, 3: 1, 4: 1, 5: 2}
+        # self.cat_ids = {1: 1, 2: 1, 3: 1, 4: 1, 5: 2}
 
         self._data_rng = np.random.RandomState(123)
         self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571],
