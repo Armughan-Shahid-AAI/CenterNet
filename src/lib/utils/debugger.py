@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from .ddd_utils import compute_box_3d, project_to_image, draw_box_3d
 
+img_num = 0
 class Debugger(object):
   def __init__(self, ipynb=False, theme='black', 
                num_classes=-1, dataset=None, down_ratio=4):
@@ -25,12 +26,9 @@ class Debugger(object):
     if dataset == 'coco_hp':
       self.names = ['p']
       self.num_class = 1
-      self.num_joints = 17
-      self.edges = [[0, 1], [0, 2], [1, 3], [2, 4], 
-                    [3, 5], [4, 6], [5, 6], 
-                    [5, 7], [7, 9], [6, 8], [8, 10], 
-                    [5, 11], [6, 12], [11, 12], 
-                    [11, 13], [13, 15], [12, 14], [14, 16]]
+      ##changed
+      self.num_joints = 1
+      self.edges = []
       self.ec = [(255, 0, 0), (0, 0, 255), (255, 0, 0), (0, 0, 255), 
                  (255, 0, 0), (0, 0, 255), (255, 0, 255),
                  (255, 0, 0), (255, 0, 0), (0, 0, 255), (0, 0, 255),
@@ -175,7 +173,7 @@ class Debugger(object):
       cv2.circle(self.imgs[img_id], (rect1[0], rect2[1]), int(10 * conf), c, 1)
       cv2.circle(self.imgs[img_id], (rect2[0], rect1[1]), int(10 * conf), c, 1)
 
-  def add_coco_bbox(self, bbox, cat, conf=1, show_txt=True, img_id='default'): 
+  def add_coco_bbox(self, bbox, cat, conf=1, show_txt=True, img_id='default', text="", show_classname=True):
     bbox = np.array(bbox, dtype=np.int32)
     # cat = (int(cat) + 1) % 80
     cat = int(cat)
@@ -183,7 +181,8 @@ class Debugger(object):
     c = self.colors[cat][0][0].tolist()
     if self.theme == 'white':
       c = (255 - np.array(c)).tolist()
-    txt = '{}{:.1f}'.format(self.names[cat], conf)
+    txt = '{}{:.1f}'.format(self.names[cat], conf) if show_classname else ""
+    txt = txt + text
     font = cv2.FONT_HERSHEY_SIMPLEX
     cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
     cv2.rectangle(
@@ -199,7 +198,7 @@ class Debugger(object):
     points = np.array(points, dtype=np.int32).reshape(self.num_joints, 2)
     for j in range(self.num_joints):
       cv2.circle(self.imgs[img_id],
-                 (points[j, 0], points[j, 1]), 3, self.colors_hp[j], -1)
+                 (points[j, 0], points[j, 1]), 8, self.colors_hp[j], -1)
     for j, e in enumerate(self.edges):
       if points[e].min() > 0:
         cv2.line(self.imgs[img_id], (points[e[0], 0], points[e[0], 1]),
@@ -222,8 +221,12 @@ class Debugger(object):
   def show_all_imgs(self, pause=False, time=0):
     if not self.ipynb:
       for i, v in self.imgs.items():
+          global img_num
+          img_num+=1
+          print("saving image ", "results/result_{}.png".format(img_num))
         # cv2.imshow('{}'.format(i), v)
-          cv2.imwrite("result.png",v)
+
+          cv2.imwrite("results/result_{}.png".format(img_num),v)
       # if cv2.waitKey(0 if pause else 1) == 27:
       #   import sys
       #   sys.exit(0)
@@ -336,6 +339,50 @@ class Debugger(object):
             box_3d = compute_box_3d(dim, loc, rot_y)
             box_2d = project_to_image(box_3d, calib)
             self.imgs[img_id] = draw_box_3d(self.imgs[img_id], box_2d, cl)
+
+  def add_orientation_lines(self, split_coord, bbox, img_id):
+      min_x, min_y, max_x, max_y = np.array(bbox, dtype=np.int32)
+      sc_x, sc_y = np.array(split_coord, dtype=np.int32)
+      img = self.imgs[img_id]
+      color = (0, 255,0)
+      thickness = 2
+      img = cv2.line(img, (sc_x, max_y), (max_x, sc_y), color, thickness)
+      img = cv2.line(img, (sc_x, max_y), (min_x, sc_y), color, thickness)
+      self.imgs[img_id] = img
+
+
+  def add_2d_to_3d_detection(self, detection, img_id):
+      img = self.imgs[img_id]
+      color = (0, 0, 255)
+      color2 = (0, 0, 255)
+      color3 = (0, 255, 0)
+      thickness = 3
+
+      min_x, min_y, w, h, center_x_3d, center_y_3d, delta_x, delta_y, delta_z, rotation_ry = detection
+      c_x, c_y = center_x_3d, center_y_3d
+      center = np.array([c_x, c_y])
+
+      dt_x_2d = (delta_z / 2) * np.cos(-rotation_ry)
+      dt_y_2d = (delta_z / 2) * np.sin(-rotation_ry)
+      deltas_2d_base_centers = np.array([dt_x_2d, dt_y_2d])
+
+      c_face1 = center + deltas_2d_base_centers
+      c_face2 = center - deltas_2d_base_centers
+
+      delta_scale_corners = np.array([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]])
+      corners1 = (delta_scale_corners * np.array([[delta_x, delta_y]])) + c_face1.reshape(-1, 2)
+      corners2 = (delta_scale_corners * np.array([[delta_x, delta_y]])) + c_face2.reshape(-1, 2)
+      corners1 = corners1.astype(np.int32)
+      corners2 = corners2.astype(np.int32)
+
+      for i, (c1, c2) in enumerate(zip(corners1, corners2)):
+          color_temp = color if i >= 2 else color2
+          img = cv2.line(img, tuple(c1), tuple(c2), color_temp, 2)
+
+      img = cv2.rectangle(img, tuple(corners1[0]), tuple(corners1[2]), color2, 1, cv2.LINE_4)
+      img = cv2.rectangle(img, tuple(corners2[0]), tuple(corners2[2]), color, 2)
+      # img = cv2.rectangle(img, (int(min_x), int(min_y)), (int(min_x + w), int(min_y + h)), color3, thickness)
+      self.imgs[img_id] = img
 
   def compose_vis_add(
     self, img_path, dets, calib,

@@ -138,6 +138,8 @@ class opts(object):
     self.parser.add_argument('--aug_rot', type=float, default=0, 
                              help='probability of applying '
                                   'rotation augmentation.')
+    self.parser.add_argument('--num_joints', type=int, default=1,
+                             help='num of keypoints per object')
     # ddd
     self.parser.add_argument('--aug_ddd', type=float, default=0.2,
                              help='probability of applying crop augmentation.')
@@ -343,7 +345,7 @@ class opts(object):
     elif opt.task == 'multi_pose':
       # assert opt.dataset in ['coco_hp']
       opt.flip_idx = dataset.flip_idx
-      num_joints = 1
+      num_joints = opt.num_joints
       ##changed
       # opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints}
       opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 2* num_joints, 'vfr': 7, 'vs':3 }

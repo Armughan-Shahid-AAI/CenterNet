@@ -539,9 +539,10 @@ def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
     return detections
 
 def multi_pose_decode(
-    heat, wh, kps, reg=None, hm_hp=None, hp_offset=None, K=100):
+    heat, wh, kps, vfr, vs ,reg=None, hm_hp=None, hp_offset=None, K=100):
   batch, cat, height, width = heat.size()
   num_joints = kps.shape[1] // 2
+
   # heat = torch.sigmoid(heat)
   # perform nms on heatmaps
   heat = _nms(heat)
@@ -561,6 +562,16 @@ def multi_pose_decode(
     ys = ys.view(batch, K, 1) + 0.5
   wh = _transpose_and_gather_feat(wh, inds)
   wh = wh.view(batch, K, 2)
+
+  ##changed
+  vfr = _transpose_and_gather_feat(vfr, inds)
+  vfr = vfr.view(batch, K, 7)
+  vfr_conf, vfr_ind = vfr.max(dim=2,keepdim=True)
+  vfr_ind = vfr_ind.float()
+  vs = _transpose_and_gather_feat(vs, inds)
+  vs = vs.view(batch, K, 3)
+  vs_conf, vs_ind = vs.max(dim=2, keepdim=True)
+  vs_ind = vs_ind.float()
   clses  = clses.view(batch, K, 1).float()
   scores = scores.view(batch, K, 1)
 
@@ -610,6 +621,7 @@ def multi_pose_decode(
       kps = (1 - mask) * hm_kps + mask * kps
       kps = kps.permute(0, 2, 1, 3).contiguous().view(
           batch, K, num_joints * 2)
-  detections = torch.cat([bboxes, scores, kps, clses], dim=2)
+  detections = torch.cat([bboxes, scores, kps, clses, vfr_ind, vs_ind], dim=2)
+  print("detections ", detections.size())
     
   return detections
