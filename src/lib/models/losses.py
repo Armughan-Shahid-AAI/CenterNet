@@ -232,7 +232,7 @@ class CrossEntropyLossWMask(nn.Module):
         preds = preds.view(-1, num_classes) #(B*num_objs,C)
 
         target = target.view(-1) #(B*num_objs)
-        mask = mask.view(-1) #(B*num_objs)
+        mask = mask.view(-1).bool() #(B*num_objs)
 
 
         preds=preds[mask,:]
