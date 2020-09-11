@@ -234,6 +234,18 @@ class opts(object):
     self.parser.add_argument('--eval_oracle_dep', action='store_true', 
                              help='use ground truth depth.')
 
+    #visualization
+    self.parser.add_argument('--draw_orientation', action='store_true',
+                             help='draw orientation lines')
+
+    self.parser.add_argument('--draw_bbox', action='store_true',
+                             help='draw bbox')
+
+    self.parser.add_argument('--draw_3d_box', action='store_true',
+                             help='draw 3d box')
+    self.parser.add_argument('--draw_keypoints', action='store_true',
+                             help='draw keypoints')
+
   def parse(self, args=''):
     if args == '':
       opt = self.parser.parse_args()

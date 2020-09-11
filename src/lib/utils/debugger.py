@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import os
 
 import numpy as np
 import cv2
@@ -218,18 +219,22 @@ class Debugger(object):
                                        points[i][j][1] * self.down_ratio),
                    3, (int(c[0]), int(c[1]), int(c[2])), -1)
 
-  def show_all_imgs(self, pause=False, time=0):
-    if not self.ipynb:
-      for i, v in self.imgs.items():
-          global img_num
-          img_num+=1
-          print("saving image ", "results/result_{}.png".format(img_num))
-        # cv2.imshow('{}'.format(i), v)
+  def create_dirs_if_not_exists(self,directories):
+      if type(directories) == str:
+          directories = [directories]
 
-          cv2.imwrite("results/result_{}.png".format(img_num),v)
-      # if cv2.waitKey(0 if pause else 1) == 27:
-      #   import sys
-      #   sys.exit(0)
+      for d in directories:
+          if not os.path.isdir(d):
+              os.makedirs(d)
+
+  def show_all_imgs(self, pause=False, time=0):
+    output_dir = "../results"
+    self.create_dirs_if_not_exists([output_dir])
+    if not self.ipynb:
+      for img_name, img in self.imgs.items():
+        output_img_name = os.path.basename(img_name)
+        cv2.imwrite(os.path.join(output_dir, output_img_name), img)
+
     else:
       self.ax = None
       nImgs = len(self.imgs)

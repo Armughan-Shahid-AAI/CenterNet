@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import os
 
 import cv2
 import numpy as np
@@ -84,6 +85,7 @@ class BaseDetector(object):
    raise NotImplementedError
 
   def run(self, image_or_path_or_tensor, meta=None):
+    image_name = "{}.jpg".format(np.random.randint(0,100))
     load_time, pre_time, net_time, dec_time, post_time = 0, 0, 0, 0, 0
     merge_time, tot_time = 0, 0
     debugger = Debugger(dataset=self.opt.dataset, ipynb=(self.opt.debug==3),
@@ -94,6 +96,7 @@ class BaseDetector(object):
       image = image_or_path_or_tensor
     elif type(image_or_path_or_tensor) == type (''): 
       image = cv2.imread(image_or_path_or_tensor)
+      image_name = os.path.basename(image_or_path_or_tensor)
     else:
       image = image_or_path_or_tensor['image'][0].numpy()
       pre_processed_images = image_or_path_or_tensor
@@ -142,7 +145,7 @@ class BaseDetector(object):
     tot_time += end_time - start_time
 
     if self.opt.debug >= 1:
-      self.show_results(debugger, image, results)
+      self.show_results(debugger, image, results, image_name)
 
     # print("detections ",detections[0])
 

@@ -152,8 +152,5 @@ def multi_pose_post_process(dets, c, s, h, w, num_joints=1):
        # pts.reshape(-1, 2), ], axis=1).astype(np.float32).tolist()
        pts.reshape(-1, 2), dets[i, :, -2:-1], dets[i, :, -1:] ], axis = 1).astype(np.float32).tolist()
 
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXX post process line 152")
-    print("shape pts ", np.array(top_preds).shape)
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     ret.append({np.ones(1, dtype=np.int32)[0]: top_preds})
   return ret

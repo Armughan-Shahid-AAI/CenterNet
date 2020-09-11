@@ -26,7 +26,10 @@ class MultiPoseDetector(BaseDetector):
     super(MultiPoseDetector, self).__init__(opt)
     self.flip_idx = opt.flip_idx
     self.num_joints = opt.num_joints
-
+    self.draw_orientation = opt.draw_orientation
+    self.draw_3d_box = opt.draw_3d_box
+    self.draw_bbox = opt.draw_bbox
+    self.draw_keypoints = opt.draw_keypoints
     vfr_to_int_mapper = {
       "None": 0,
       "Front - Left BB part": 1,
@@ -103,7 +106,6 @@ class MultiPoseDetector(BaseDetector):
     if self.opt.nms or len(self.opt.test_scales) > 1:
       soft_nms_39(results[1], Nt=0.5, method=2)
     results[1] = results[1].tolist()
-    print ("merger shape" ,np.array(results[1]).shape)
     return results
 
   def debug(self, debugger, images, dets, output, scale=1):
@@ -184,25 +186,31 @@ class MultiPoseDetector(BaseDetector):
 
     return min_x, min_y, w, h, center_x_3d, center_y_3d, delta_x, delta_y, delta_z, rotation_ry
 
-  def show_results(self, debugger, image, results):
-    debugger.add_img(image, img_id='multi_pose')
+  def show_results(self, debugger, image, results, image_name):
+    debugger.add_img(image, img_id=image_name)
     for bbox in results[1]:
       if bbox[4] > self.opt.vis_thresh:
         vfr = bbox[-2]
         vs = bbox[-1]
         split_coord = bbox[5:5+(2*self.num_joints)]
+        if self.draw_bbox:
+          debugger.add_coco_bbox(bbox[:4], 0, bbox[4], img_id=image_name, show_classname=False)
+
         # debugger.add_coco_bbox(bbox[:4], 0, bbox[4], img_id='multi_pose', text=":{}, {}".format(
         #   self.int_to_vfr_mapper[vfr], self.int_to_vs_mapper[vs])
         #                        , show_classname=False)
 
-        debugger.add_coco_bbox(bbox[:4], 0, bbox[4], img_id='multi_pose', text=":{}".format(
-          self.int_to_vs_mapper[vs])
-                               , show_classname=False)
+        # debugger.add_coco_bbox(bbox[:4], 0, bbox[4], img_id='multi_pose', text=":{}".format(
+        #   self.int_to_vs_mapper[vs])
+        #                        , show_classname=False)
 
         ##changed
         # debugger.add_coco_hp(bbox[5:39], img_id='multi_pose')
-        debugger.add_coco_hp(bbox[5:5+(2*self.num_joints)], img_id='multi_pose')
-        # info = self.get_3d_info(bbox[:4], vfr, vs, split_coord)
-        # debugger.add_2d_to_3d_detection(info, img_id='multi_pose' )
-        debugger.add_orientation_lines(split_coord, bbox[:4], img_id='multi_pose')
+        if self.draw_keypoints:
+          debugger.add_coco_hp(bbox[5:5+(2*self.num_joints)], img_id=image_name)
+        if self.draw_3d_box:
+          info = self.get_3d_info(bbox[:4], vfr, vs, split_coord)
+          debugger.add_2d_to_3d_detection(info, img_id=image_name )
+        if self.draw_orientation:
+          debugger.add_orientation_lines(split_coord, bbox[:4], img_id=image_name)
     debugger.show_all_imgs(pause=self.pause)
